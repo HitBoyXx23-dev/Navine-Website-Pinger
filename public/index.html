@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navine Website Pinger</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="dot"></div>
+          <h1>Navine Website Pinger</h1>
+        </div>
+        <button id="logoutBtn" class="btn ghost hidden">Logout</button>
+      </header>
+
+      <!-- Login -->
+      <section id="loginView" class="card">
+        <h2>Sign in</h2>
+        <p class="muted">Enter username & password to manage your monitors.</p>
+        <form id="loginForm" class="form">
+          <label>
+            Username
+            <input id="username" autocomplete="username" required />
+          </label>
+          <label>
+            Password
+            <input id="password" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="btn primary" type="submit">Login</button>
+          <div id="loginError" class="error hidden"></div>
+        </form>
+        <p class="muted small">
+          Default login is <code>admin</code> / <code>admin123</code> (change via env vars).
+        </p>
+      </section>
+
+      <!-- Dashboard -->
+      <section id="dashView" class="hidden">
+        <div class="grid">
+          <div class="card">
+            <h2>Add a site</h2>
+            <form id="addSiteForm" class="form">
+              <label>
+                Site name
+                <input id="siteName" placeholder="My Homepage" required />
+              </label>
+              <label>
+                URL
+                <input id="siteUrl" placeholder="https://example.com" required />
+              </label>
+              <button class="btn primary" type="submit">Add</button>
+              <div id="addError" class="error hidden"></div>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>Monitor</h2>
+            <p class="muted">
+              Auto-checks every <b>30–60 seconds</b>. “Visits” = successful checks.
+            </p>
+
+            <div class="tableWrap">
+              <table class="table" id="monitorTable">
+                <thead>
+                  <tr>
+                    <th>Site</th>
+                    <th>Status</th>
+                    <th>Ping</th>
+                    <th>Visits</th>
+                    <th>Checks</th>
+                    <th>Uptime</th>
+                    <th>Last Checked</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="monitorBody"></tbody>
+              </table>
+            </div>
+
+            <div class="muted small">
+              Tip: keep this tab open to see live updates (dashboard refreshes every 5s).
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer muted small">
+        Black + Royal Blue theme • Navine Website Pinger
+      </footer>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
