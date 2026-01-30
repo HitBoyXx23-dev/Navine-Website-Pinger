@@ -8,32 +8,82 @@
 </head>
 <body>
   <div class="app">
+
+    <!-- TOP BAR -->
     <header class="topbar">
       <h1>Navine Website Pinger</h1>
-      <button id="logoutBtn" class="btn ghost hidden">Logout</button>
+
+      <div style="display:flex; gap:10px;">
+        <a
+          href="https://navine-website-pinger.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn primary"
+          title="Open Better Pinger in new tab"
+        >
+          🌐 Better Pinger
+        </a>
+
+        <button id="logoutBtn" class="btn ghost hidden">
+          Logout
+        </button>
+      </div>
     </header>
 
-    <!-- LOGIN -->
+    <!-- LOGIN / REGISTER -->
     <section id="loginView" class="card">
       <h2>Login / Register</h2>
-      <input id="username" placeholder="Username" />
-      <input id="password" type="password" placeholder="Password" />
-      <button id="loginBtn" class="btn primary">Enter</button>
-      <p class="muted small">New usernames are auto-registered</p>
+
+      <input
+        id="username"
+        placeholder="Username"
+        autocomplete="username"
+      />
+
+      <input
+        id="password"
+        type="password"
+        placeholder="Password"
+        autocomplete="current-password"
+      />
+
+      <button id="loginBtn" class="btn primary">
+        Enter
+      </button>
+
+      <p class="muted small">
+        Any username works — first login creates a local account
+      </p>
+
       <div id="loginError" class="error hidden"></div>
     </section>
 
     <!-- DASHBOARD -->
     <section id="dashView" class="hidden">
+
+      <!-- ADD SITE -->
       <div class="card">
         <h2>Add Website</h2>
-        <input id="siteName" placeholder="Site name" />
-        <input id="siteUrl" placeholder="https://example.com" />
-        <button id="addSiteBtn" class="btn primary">Add</button>
+
+        <input
+          id="siteName"
+          placeholder="Site name (e.g. My Site)"
+        />
+
+        <input
+          id="siteUrl"
+          placeholder="https://example.com"
+        />
+
+        <button id="addSiteBtn" class="btn primary">
+          Add Site
+        </button>
       </div>
 
+      <!-- MONITOR -->
       <div class="card">
         <h2>Monitor</h2>
+
         <table>
           <thead>
             <tr>
@@ -46,10 +96,33 @@
               <th></th>
             </tr>
           </thead>
-          <tbody id="siteTable"></tbody>
+
+          <tbody id="siteTable">
+            <!-- populated by app.js -->
+          </tbody>
         </table>
       </div>
+
+      <!-- EXTERNAL SITE CARD -->
+      <div class="card">
+        <h2>Try the Hosted Version</h2>
+        <p class="muted">
+          Faster, online, and accessible from anywhere.
+        </p>
+
+        <a
+          href="https://navine-website-pinger.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn primary"
+          style="text-decoration:none; display:inline-block;"
+        >
+          🚀 Open in New Tab
+        </a>
+      </div>
+
     </section>
+
   </div>
 
   <script src="app.js"></script>
