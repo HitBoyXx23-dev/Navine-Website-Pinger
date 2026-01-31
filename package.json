@@ -4,7 +4,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "npm start"
   },
   "dependencies": {
     "better-sqlite3": "^9.4.0",
