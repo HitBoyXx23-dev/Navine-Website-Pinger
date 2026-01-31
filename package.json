@@ -1,10 +1,10 @@
 {
   "name": "navine-website-pinger",
   "version": "1.0.0",
-  "main": "server.js",
   "type": "module",
+  "main": "server.js",
   "scripts": {
-    "start": "npm start"
+    "start": "node server.js"
   },
   "dependencies": {
     "better-sqlite3": "^9.4.0",
