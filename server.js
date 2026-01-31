@@ -18,40 +18,50 @@ const db = new Database("navine.db");
 const httpAgent = new http.Agent({ keepAlive: true });
 const httpsAgent = new https.Agent({ keepAlive: true });
 
-// ---------- DB setup ----------
+// ---------- DB SETUP ----------
 db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL
-  );
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL
+);
 
-  CREATE TABLE IF NOT EXISTS sites (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    name TEXT NOT NULL,
-    url TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
+CREATE TABLE IF NOT EXISTS sites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  url TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
-  CREATE TABLE IF NOT EXISTS checks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    site_id INTEGER NOT NULL,
-    checked_at TEXT NOT NULL DEFAULT (datetime('now')),
-    ok INTEGER NOT NULL,
-    status_code INTEGER,
-    latency_ms INTEGER,
-    error TEXT
-  );
+CREATE TABLE IF NOT EXISTS checks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  site_id INTEGER NOT NULL,
+  checked_at TEXT NOT NULL DEFAULT (datetime('now')),
+  ok INTEGER NOT NULL,
+  status_code INTEGER,
+  latency_ms INTEGER,
+  error TEXT
+);
 `);
 
 // ---------- DEFAULT USER ----------
 const DEFAULT_ADMIN_USER = process.env.NAVINE_USER || "admin";
 const DEFAULT_ADMIN_PASS = process.env.NAVINE_PASS || "admin123";
 
-if (db.prepare("SELECT COUNT(*) AS c FROM users").get().c === 0) {
-  db.prepare("INSERT INTO users (username, password_hash)")
-    .run(DEFAULT_ADMIN_USER, bcrypt.hashSync(DEFAULT_ADMIN_PASS, 12));
+const userCount = db.prepare(
+  "SELECT COUNT(*) AS c FROM users"
+).get().c;
+
+if (userCount === 0) {
+  db.prepare(`
+    INSERT INTO users (username, password_hash)
+    VALUES (?, ?)
+  `).run(
+    DEFAULT_ADMIN_USER,
+    bcrypt.hashSync(DEFAULT_ADMIN_PASS, 12)
+  );
+
   console.log(`Seeded admin: ${DEFAULT_ADMIN_USER} / ${DEFAULT_ADMIN_PASS}`);
 }
 
@@ -73,9 +83,14 @@ app.use(express.static(path.join(__dirname, "public")));
 // ---------- AUTH ----------
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
-  const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username);
-  if (!user || !bcrypt.compareSync(password, user.password_hash))
+
+  const user = db.prepare(
+    "SELECT * FROM users WHERE username = ?"
+  ).get(username);
+
+  if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return res.sendStatus(401);
+  }
 
   req.session.userId = user.id;
   res.json({ ok: true });
@@ -91,29 +106,37 @@ app.get("/api/me", (req, res) => {
 
 // ---------- SITES ----------
 app.get("/api/sites", requireAuth, (req, res) => {
-  res.json({
-    sites: db.prepare(
-      "SELECT * FROM sites WHERE user_id = ? ORDER BY id DESC"
-    ).all(req.session.userId)
-  });
+  const sites = db.prepare(
+    "SELECT * FROM sites WHERE user_id = ? ORDER BY id DESC"
+  ).all(req.session.userId);
+
+  res.json({ sites });
 });
 
 app.post("/api/sites", requireAuth, (req, res) => {
   let { name, url } = req.body;
   if (!url.startsWith("http")) url = "https://" + url;
 
-  const info = db.prepare(
-    "INSERT INTO sites (user_id, name, url) VALUES (?, ?, ?)"
-  ).run(req.session.userId, name.trim(), url.trim());
+  const info = db.prepare(`
+    INSERT INTO sites (user_id, name, url)
+    VALUES (?, ?, ?)
+  `).run(
+    req.session.userId,
+    name.trim(),
+    url.trim()
+  );
 
   res.json({ id: info.lastInsertRowid });
 });
 
 app.delete("/api/sites/:id", requireAuth, (req, res) => {
-  const id = +req.params.id;
+  const id = Number(req.params.id);
+
   db.prepare("DELETE FROM checks WHERE site_id = ?").run(id);
-  db.prepare("DELETE FROM sites WHERE id = ? AND user_id = ?")
-    .run(id, req.session.userId);
+  db.prepare(
+    "DELETE FROM sites WHERE id = ? AND user_id = ?"
+  ).run(id, req.session.userId);
+
   res.json({ ok: true });
 });
 
@@ -123,17 +146,22 @@ app.get("/api/summary", requireAuth, (req, res) => {
     "SELECT * FROM sites WHERE user_id = ?"
   ).all(req.session.userId);
 
-  const summary = sites.map(s => {
-    const last = db.prepare(
-      "SELECT * FROM checks WHERE site_id = ? ORDER BY id DESC LIMIT 1"
-    ).get(s.id);
+  const summary = sites.map(site => {
+    const last = db.prepare(`
+      SELECT * FROM checks
+      WHERE site_id = ?
+      ORDER BY id DESC
+      LIMIT 1
+    `).get(site.id);
 
     const stats = db.prepare(`
-      SELECT COUNT(*) c, SUM(ok) ok FROM checks WHERE site_id = ?
-    `).get(s.id);
+      SELECT COUNT(*) c, SUM(ok) ok
+      FROM checks
+      WHERE site_id = ?
+    `).get(site.id);
 
     return {
-      ...s,
+      ...site,
       last,
       checks: stats.c,
       uptime: stats.c ? (stats.ok / stats.c) * 100 : null
@@ -170,6 +198,7 @@ async function checkSite(site) {
       return;
     } catch (err) {
       clearTimeout(timer);
+
       if (attempt === RETRIES) {
         db.prepare(`
           INSERT INTO checks (site_id, ok, error, latency_ms)
